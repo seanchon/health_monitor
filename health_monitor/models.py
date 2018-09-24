@@ -20,6 +20,8 @@ from django.db import models
 from django.utils import timezone
 
 from health_monitor import utils
+from datetime import datetime, timedelta
+from pytz import timezone as pytimezone
 
 
 class Health(models.Model):
@@ -143,6 +145,23 @@ class Health(models.Model):
         abstract = True
 
 
+def inside_window(days_window, state, group, test):
+    try:
+        date_to_check = state[group][test]['updated']
+    except Exception:
+        return False
+    delta_time = timedelta(days=days_window)
+    window_date = (datetime.utcnow() - delta_time).replace(
+        tzinfo=pytimezone('UTC')
+        )
+
+    date_from_str = datetime.strptime(
+        date_to_check,
+        "%Y-%m-%dT%H:%M:%S.%fZ"
+        ).replace(tzinfo=pytimezone('UTC'))
+    return date_from_str > window_date
+
+
 class HealthAlarm(object):
     @classmethod
     def _get_associated_healths(cls, group, test):
@@ -161,7 +180,7 @@ class HealthAlarm(object):
     @classmethod
     def calculate_alarms(
         cls, group, test, score, aggregate_percent=0, repetition=1,
-        repetition_percent=100, **kwargs
+        repetition_percent=100, days_window=None, **kwargs
     ):
         """Return a list of asset uids based off of filtering criteria.
 
@@ -175,8 +194,16 @@ class HealthAlarm(object):
             trigger an alarm
         repetition_percent -- minimum percentage of failures within repetition
             to trigger an alarm
+        days_window        -- number of days to look back
         """
         healths = cls._get_associated_healths(group, test)
+
+        # Step 0: Filter out all health that fall outside the days_window value
+        if days_window:
+            healths = filter(
+                lambda h: inside_window(days_window, h.state, group, test),
+                healths
+                )
 
         # step 1: filter failing assets by score, if repetition_percent is less
         # than 100%, all healths must be checked
@@ -196,7 +223,8 @@ class HealthAlarm(object):
 
         # step 3: return empty array if percentage of failing assets is below
         # aggregate_percent
-        if (len(failing_healths) / len(healths)) < (aggregate_percent / 100):
+        if len(healths) != 0 and (len(failing_healths) /
+                                  len(healths)) < (aggregate_percent / 100):
             return []
         else:
             return [x.uid for x in failing_healths]

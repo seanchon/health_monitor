@@ -120,7 +120,7 @@ class HealthAlarmView(View):
                 kwargs = {}
                 for k in [
                     'score', 'aggregate_percent', 'repetition',
-                    'repetition_percent'
+                    'repetition_percent', 'days_window'
                 ]:
                     if k in request.GET.keys():
                         kwargs[k] = int(request.GET[k])

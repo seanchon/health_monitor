@@ -309,7 +309,7 @@ API Endpoints for `HealthAlarm` Model
 
 Setting up "Health Alarms" within Django Health Monitor is meant to identify alerts for issues that affect a certain portion of a system or population. Whenever a test result for an "asset" (e.g. a person, a server, a stock ticker, etc.) is written, the resulting write updates the asset's health state, health severity, and health history, which help to quickly identify issues that are affecting a portion of a system or population.
 
-The following steps create an API that allow us to filter which assets within a system or population exhibit failure conditions based off of four criteria - score, aggregate percent, repetition, and repetition percent - using an API with the following endpoints and actions:
+The following steps create an API that allow us to filter which assets within a system or population exhibit failure conditions based off of five criteria - score, aggregate percent, repetition, repetition percent and days window - using an API with the following endpoints and actions:
 
 **health_alarm**
 
@@ -356,7 +356,7 @@ Let's look at some example responses if we were to pass different query strings 
     - @t5: GET /health_alarm/doctor/heart/?score=2&repetition=3
         - returns `[2]`
 
-These four "levers" - `score`, `aggregate_percent`, `repetition`, and `repetition_percent` - are meant to help make tests less sensitive to small system-wide failures (raising `aggregate_percent`), less sensitive to failure "blips" that automatically correct themselves (increasing `repetition`), more sensitive to failures within a sequence of tests (lowering `repetition_percent`), etc.
+These five "levers" - `score`, `aggregate_percent`, `repetition`, `repetition_percent` and `days_window` - are meant to help make tests less sensitive to small system-wide failures (raising `aggregate_percent`), less sensitive to failure "blips" that automatically correct themselves (increasing `repetition`), more sensitive to failures within a sequence of tests (lowering `repetition_percent`), and restricting how far back to return (increasing `days_window`), etc.
 
 Configure `HealthAlarm` Model
 -----------------------------
